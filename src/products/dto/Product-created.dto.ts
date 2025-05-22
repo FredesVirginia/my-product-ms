@@ -1,24 +1,26 @@
-
-import { IsString, IsEnum, IsOptional, IsUUID, IsNotEmpty, IsEmail } from 'class-validator';
-import { TodoListState } from '../enums/enums';
-import { NotIncludeWord } from './Custom-Validations/CustomValidator';
+import {
+  IsDecimal,
+  IsNotEmpty,
+  IsNumber,
+  IsString
+} from 'class-validator';
 
 export class CreateProductDto {
   @IsString()
   @IsNotEmpty()
-  
   name: string;
 
-  @IsString()
+  @IsDecimal()
   @IsNotEmpty()
-  @IsEmail()
-  email: string;
+  price: number;
 
+  @IsNumber()
+  @IsNotEmpty()
+  stock: number;
 }
-
 
 export class SearTodoListByKeyword {
   @IsString()
   @IsNotEmpty()
-  word : string
+  word: string;
 }

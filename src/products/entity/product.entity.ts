@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-import { TodoListState } from '../enums/enums';
+
 @Entity()
 export class Product {
   @PrimaryGeneratedColumn('uuid')
@@ -8,8 +8,11 @@ export class Product {
   @Column()
   name: string;
 
+  @Column('decimal')
+  price : number;
+
   @Column()
-  email: string;
+  stock : number;
 
   
   @CreateDateColumn()
