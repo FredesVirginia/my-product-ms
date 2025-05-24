@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param,  ParseUUIDPipe, Post } from '@nestjs/common';
 
 
-import { Payload } from '@nestjs/microservices';
+import { MessagePattern, Payload } from '@nestjs/microservices';
 
 
 import { ProductService } from './products.service';
@@ -11,13 +11,14 @@ import { CreateProductDto } from './dto/Product-created.dto';
 export class ProductController {
     constructor (private readonly productService : ProductService){}
 
-
+    @MessagePattern('create-product')
     @Post()
     async createUser(@Body() userTodoListDto : CreateProductDto){
         const newTodoList = await this.productService.createProduct(userTodoListDto)
         return newTodoList
     }
 
+    @MessagePattern('show-all-product')
     @Get()
     async getAllUser(){
         return await this.productService.getAllProduct()
