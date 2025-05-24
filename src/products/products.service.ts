@@ -8,23 +8,36 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 
 
-import { ILike, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
 import { RpcException } from '@nestjs/microservices';
 
-import { Product } from './entity/product.entity';
 import { CreateProductDto } from './dto/Product-created.dto';
+import { Product } from './entity/product.entity';
+import { Category } from './entity/category.entity';
 
 @Injectable()
 export class ProductService {
   constructor(
     @InjectRepository(Product)
     private productRepository: Repository<Product>,
+
+     @InjectRepository(Category)
+    private categoryRepository : Repository<Category>
   ) {}
 
   async createProduct(userDto: CreateProductDto) {
     try {
-      const userNew = await this.productRepository.save(userDto);
+
+      const categoryId = await this.categoryRepository.findOneBy({
+        id : userDto.category
+      })
+      const userNew = await this.productRepository.save({
+        name : userDto.name,
+        stock : userDto.stock,
+        price : userDto.price , 
+        category : categoryId!
+      });
       return userNew;
     } catch (error) {
       console.log('EEROR FUE ', error);

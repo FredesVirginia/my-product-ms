@@ -12,8 +12,8 @@ export class ProductController {
     constructor (private readonly productService : ProductService){}
 
     @MessagePattern('create-product')
-    @Post()
-    async createUser(@Body() userTodoListDto : CreateProductDto){
+   
+    async createUser(@Payload() userTodoListDto : CreateProductDto){
         const newTodoList = await this.productService.createProduct(userTodoListDto)
         return newTodoList
     }
