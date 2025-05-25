@@ -6,10 +6,19 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 
 import { ProductService } from './products.service';
 import { CreateProductDto } from './dto/Product-created.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Product } from './entity/product.entity';
+import { In, Repository } from 'typeorm';
 
 @Controller('products')
 export class ProductController {
-    constructor (private readonly productService : ProductService){}
+    constructor (
+         @InjectRepository(Product)
+        private productRepository : Repository<Product>,
+        private readonly productService : ProductService
+       
+    
+    ){}
 
     @MessagePattern('create-product')
    
@@ -22,6 +31,24 @@ export class ProductController {
     @Get()
     async getAllUser(){
         return await this.productService.getAllProduct()
+    }
+
+    @MessagePattern('get-products-by-ids')
+    async getProductsByIds( @Payload () productIds : string[]){
+        return this.productRepository.find({
+            where : { id : In(productIds)},
+            relations:['category']
+        })
+    }
+
+
+
+    @MessagePattern('get-products-by-category')
+    async getProductsByCategory(@Payload() categoryName : string ){
+        return this.productRepository.find({
+            where : { category : {name : categoryName}},
+            relations : ['category']
+        })
     }
 
     @Get(':id')
