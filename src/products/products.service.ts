@@ -68,6 +68,7 @@ export class ProductService {
     const categoryProductMasComprado = data.categoriaDeProductoComprado;
     const productosComprados = data.productosComprados;
 
+    console.log("PRODUCTOS COMPRADOS" , productosComprados)
     const productosRecomendados = await this.productRepository
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.category', 'category')
@@ -79,8 +80,8 @@ export class ProductService {
       })
       .getMany();
 
-      console.log("FINALLLLLLLLLLLL" , productosRecomendados)
-
+      
+      console.log("RESULTADO" , productosRecomendados)
       return productosRecomendados;
   }
 
