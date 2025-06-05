@@ -2,6 +2,7 @@ import {
   IsDecimal,
   IsNotEmpty,
   IsNumber,
+  IsOptional,
   IsString
 } from 'class-validator';
 
@@ -22,6 +23,29 @@ export class CreateProductDto {
   @IsNotEmpty()
   category: string;
 }
+
+
+export class UpdateProductDto {
+  @IsString()
+  @IsOptional()
+  name?: string;
+
+  @IsDecimal()
+  @IsOptional()
+  price?: number;
+
+  @IsNumber()
+   @IsOptional()
+  stock?: number;
+
+   @IsString()
+  @IsOptional()
+  category?: string;
+}
+
+
+
+
 
 export class SearTodoListByKeyword {
   @IsString()

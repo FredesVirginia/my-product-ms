@@ -11,10 +11,10 @@ import { Repository } from 'typeorm';
 
 import { RpcException } from '@nestjs/microservices';
 
-import { CreateProductDto } from './dto/Product-created.dto';
+import { CreateProductDto, UpdateProductDto } from './dto/Product-created.dto';
 import { Product } from './entity/product.entity';
 import { Category } from './entity/category.entity';
-import {  ProductReconmedationDto } from './dto/ProductReconmedation.dto';
+import { ProductReconmedationDto } from './dto/ProductReconmedation.dto';
 
 @Injectable()
 export class ProductService {
@@ -64,11 +64,37 @@ export class ProductService {
     }
   }
 
+  async updateProduct(payload: { id: string; data: UpdateProductDto }) {
+    const { id, data } = payload;
+
+    const product = await this.productRepository.findOne({
+      where: { id: payload.id },
+    });
+    if (!product) throw new RpcException(`Producto con id ${id} no encontrado`);
+
+    // Extraer categoryId del DTO si existe
+    const { category, ...rest } = data;
+    const categoryLookFor = await this.categoryRepository.findOne({
+      where: { id: category },
+    });
+    // Actualizar campos simples
+    this.productRepository.merge(product, rest);
+
+    // Si category viene, asignar la relación manualmente
+    if (!categoryLookFor) {
+      throw new RpcException(`Categoria con id ${category} no encontrado`);
+    }
+
+    product.category = categoryLookFor;
+
+    return this.productRepository.save(product);
+  }
+
   async getAllProductRecomendation(data: ProductReconmedationDto) {
     const categoryProductMasComprado = data.categoriaDeProductoComprado;
     const productosComprados = data.productosComprados;
 
-    console.log("PRODUCTOS COMPRADOS" , productosComprados)
+    console.log('PRODUCTOS COMPRADOS', productosComprados);
     const productosRecomendados = await this.productRepository
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.category', 'category')
@@ -80,9 +106,8 @@ export class ProductService {
       })
       .getMany();
 
-      
-      console.log("RESULTADO" , productosRecomendados)
-      return productosRecomendados;
+    console.log('RESULTADO', productosRecomendados);
+    return productosRecomendados;
   }
 
   async getIdTodoList(id: string) {
@@ -97,7 +122,7 @@ export class ProductService {
   }
 
   async deleteTodoList(id: string) {
-    const todoList = await this.productRepository.findOneBy({ id });
+    const todoList = await this.productRepository.findOne({where : {id}});
     if (!todoList) {
       throw new NotFoundException('Tarea no encontrada');
     }
@@ -108,6 +133,22 @@ export class ProductService {
       data,
     };
   }
+
+   async deleteProduct(id : string){
+    console.log("EL ID ES " , id)
+      const product = await this.productRepository.findOne({where : {id}});
+      if(!product){
+        throw new NotFoundException("Producto no encontrado")
+      }
+
+      console.log("PRODUCT" , product)
+
+      const data = await this.productRepository.remove(product);
+       return {
+      status: HttpStatus.ACCEPTED,
+     data,
+    };
+   }
 
   // async lookForTodoListByKeyWord( word : string){
   //   const todoList = await this.todoListRepository.find({

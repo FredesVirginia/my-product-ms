@@ -11,7 +11,7 @@ import {
 import { MessagePattern, Payload } from '@nestjs/microservices';
 
 import { ProductService } from './products.service';
-import { CreateProductDto } from './dto/Product-created.dto';
+import { CreateProductDto, UpdateProductDto } from './dto/Product-created.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entity/product.entity';
 import { In, Repository } from 'typeorm';
@@ -31,6 +31,14 @@ export class ProductController {
       await this.productService.createProduct(userTodoListDto);
     return newTodoList;
   }
+
+@MessagePattern('update-product')
+async updateProduct(@Payload() payload: { id: string; data: UpdateProductDto }) {
+  const { id, data } = payload;
+  const productUpdate = await this.productService.updateProduct({ id, data });
+  return productUpdate;
+}
+
 
   @MessagePattern('show-all-product')
   @Get()
@@ -80,5 +88,11 @@ export class ProductController {
   @Delete(':id')
   async deleteTodoList(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.productService.deleteTodoList(id);
+  }
+
+  @MessagePattern('delete-product')
+  @Delete(':id')
+  async deleteProduct(@Payload('id', new ParseUUIDPipe()) id: string){
+    return this.productService.deleteProduct(id)
   }
 }
