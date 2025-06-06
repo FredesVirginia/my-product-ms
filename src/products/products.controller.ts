@@ -6,6 +6,7 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Query,
 } from '@nestjs/common';
 
 import { MessagePattern, Payload } from '@nestjs/microservices';
@@ -39,12 +40,17 @@ async updateProduct(@Payload() payload: { id: string; data: UpdateProductDto }) 
   return productUpdate;
 }
 
+@MessagePattern('show-all-product')
+async getAllProducts(@Payload() payload: {
+  category?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  search?: string;
+}) {
+  const { category, minPrice, maxPrice, search } = payload;
+  return await this.productService.getAllProduct(category, minPrice, maxPrice, search);
+}
 
-  @MessagePattern('show-all-product')
-  @Get()
-  async getAllUser() {
-    return await this.productService.getAllProduct();
-  }
 
   @MessagePattern('get-products-by-ids')
   async getProductsByIds(@Payload() productIds: string[]) {

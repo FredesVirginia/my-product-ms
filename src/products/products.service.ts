@@ -51,12 +51,63 @@ export class ProductService {
     }
   }
 
-  async getAllProduct() {
+  async getAllProduct(
+    category?: string,
+    minPrice?: number,
+    maxPrice?: number,
+    search?: string,
+  ) {
     try {
-      const allProduct = await this.productRepository.find({
-        relations: ['category'],
+      console.log('Filtros recibidos:', {
+        category,
+        minPrice,
+        maxPrice,
+        search,
       });
-      return allProduct;
+      // const allProduct = await this.productRepository.find({
+      //   relations: ['category'],
+      // });
+
+      const queyProductWithOutFilter = await this.productRepository
+        .createQueryBuilder('product')
+        .leftJoinAndSelect('product.category', 'category');
+      console.log('LA CATEGORIA ES ', category);
+      if (category) {
+        console.log('PRIMERO');
+        const foundCategory = await this.categoryRepository.findOne({
+          where: { name: category },
+        });
+
+        console.log('CATEGORIA', foundCategory?.id);
+        if (foundCategory) {
+          console.log('SEGUNDO');
+          queyProductWithOutFilter.andWhere('category.id = :categoryId', {
+            categoryId: foundCategory.id,
+          });
+
+         
+
+          if (minPrice) {
+            queyProductWithOutFilter.andWhere('product.price >= :minPrice', {
+              minPrice,
+            });
+          }
+
+          if (maxPrice) {
+            queyProductWithOutFilter.andWhere('product.price <= :maxPrice', {
+              maxPrice,
+            });
+          }
+
+          if (search) {
+            queyProductWithOutFilter.andWhere('product.name ILIKE :search', {
+              search: `%${search}%`,
+            });
+          }
+        }
+      }
+
+      return await queyProductWithOutFilter.getMany();
     } catch (error) {
       throw new RpcException({
         HttpStatus: HttpStatus.BAD_REQUEST,
@@ -122,7 +173,7 @@ export class ProductService {
   }
 
   async deleteTodoList(id: string) {
-    const todoList = await this.productRepository.findOne({where : {id}});
+    const todoList = await this.productRepository.findOne({ where: { id } });
     if (!todoList) {
       throw new NotFoundException('Tarea no encontrada');
     }
@@ -134,21 +185,21 @@ export class ProductService {
     };
   }
 
-   async deleteProduct(id : string){
-    console.log("EL ID ES " , id)
-      const product = await this.productRepository.findOne({where : {id}});
-      if(!product){
-        throw new NotFoundException("Producto no encontrado")
-      }
+  async deleteProduct(id: string) {
+    console.log('EL ID ES ', id);
+    const product = await this.productRepository.findOne({ where: { id } });
+    if (!product) {
+      throw new NotFoundException('Producto no encontrado');
+    }
 
-      console.log("PRODUCT" , product)
+    console.log('PRODUCT', product);
 
-      const data = await this.productRepository.remove(product);
-       return {
+    const data = await this.productRepository.remove(product);
+    return {
       status: HttpStatus.ACCEPTED,
-     data,
+      data,
     };
-   }
+  }
 
   // async lookForTodoListByKeyWord( word : string){
   //   const todoList = await this.todoListRepository.find({
