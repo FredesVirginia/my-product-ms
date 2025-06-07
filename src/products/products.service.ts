@@ -15,6 +15,7 @@ import { CreateProductDto, UpdateProductDto } from './dto/Product-created.dto';
 import { Product } from './entity/product.entity';
 import { Category } from './entity/category.entity';
 import { ProductReconmedationDto } from './dto/ProductReconmedation.dto';
+import { ProductDtoForDecreaseQuantity } from './dto/ProductDto.dto';
 
 @Injectable()
 export class ProductService {
@@ -64,9 +65,6 @@ export class ProductService {
         maxPrice,
         search,
       });
-      // const allProduct = await this.productRepository.find({
-      //   relations: ['category'],
-      // });
 
       const queyProductWithOutFilter = await this.productRepository
         .createQueryBuilder('product')
@@ -77,34 +75,24 @@ export class ProductService {
         const foundCategory = await this.categoryRepository.findOne({
           where: { name: category },
         });
+      }
 
-        console.log('CATEGORIA', foundCategory?.id);
-        if (foundCategory) {
-          console.log('SEGUNDO');
-          queyProductWithOutFilter.andWhere('category.id = :categoryId', {
-            categoryId: foundCategory.id,
-          });
+      if (minPrice) {
+        queyProductWithOutFilter.andWhere('product.price >= :minPrice', {
+          minPrice,
+        });
+      }
 
-         
+      if (maxPrice) {
+        queyProductWithOutFilter.andWhere('product.price <= :maxPrice', {
+          maxPrice,
+        });
+      }
 
-          if (minPrice) {
-            queyProductWithOutFilter.andWhere('product.price >= :minPrice', {
-              minPrice,
-            });
-          }
-
-          if (maxPrice) {
-            queyProductWithOutFilter.andWhere('product.price <= :maxPrice', {
-              maxPrice,
-            });
-          }
-
-          if (search) {
-            queyProductWithOutFilter.andWhere('product.name ILIKE :search', {
-              search: `%${search}%`,
-            });
-          }
-        }
+      if (search) {
+        queyProductWithOutFilter.andWhere('product.name ILIKE :search', {
+          search: `%${search}%`,
+        });
       }
 
       return await queyProductWithOutFilter.getMany();
@@ -114,6 +102,44 @@ export class ProductService {
       });
     }
   }
+
+
+
+
+
+  async decrementProductStock(data: ProductDtoForDecreaseQuantity) {
+  const queryRunner = this.productRepository.manager.connection.createQueryRunner();
+  await queryRunner.connect();
+  await queryRunner.startTransaction();
+
+  try {
+    for (const item of data.products) {
+      const product = await queryRunner.manager.findOne(Product, {
+        where: { id: item.productId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!product) {
+        throw new RpcException(`Producto con id ${item.productId} no encontrado`);
+      }
+
+      if (product.stock < item.quantity) {
+        throw new RpcException(`Stock insuficiente para el producto ${product.id}. Disponible: ${product.stock}, requerido: ${item.quantity}`);
+      }
+
+      product.stock -= item.quantity;
+      await queryRunner.manager.save(product);
+    }
+
+    await queryRunner.commitTransaction();
+    return { message: 'Stock actualizado correctamente' };
+  } catch (error) {
+    await queryRunner.rollbackTransaction();
+    throw error;
+  } finally {
+    await queryRunner.release();
+  }
+}
 
   async updateProduct(payload: { id: string; data: UpdateProductDto }) {
     const { id, data } = payload;

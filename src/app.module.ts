@@ -20,8 +20,12 @@ import { CategoriesModule } from './categories/categories.module';
       username: envs.dbUser,
       password: envs.dbPassword,
       database: envs.dbName,
-      entities: [Product , Category],
+
       synchronize: true,
+
+      autoLoadEntities: true,
+      entities: ['dist/**/*.entity{.ts,.js}'],
+      migrations: ['dist/migration/*.js'],
     }),
 
     CategoriesModule,

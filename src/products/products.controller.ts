@@ -17,6 +17,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entity/product.entity';
 import { In, Repository } from 'typeorm';
 import { ProductReconmedationDto } from './dto/ProductReconmedation.dto';
+import { ProductDtoForDecreaseQuantity } from './dto/ProductDto.dto';
 
 @Controller('products')
 export class ProductController {
@@ -84,6 +85,11 @@ async getAllProducts(@Payload() payload: {
       where: { category: { name: categoryName } },
       relations: ['category'],
     });
+  }
+
+  @MessagePattern('decrement-stock-product')
+  async decrementStockProduct(data : ProductDtoForDecreaseQuantity){
+    return this.productService.decrementProductStock(data)
   }
 
   @Get(':id')

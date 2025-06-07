@@ -9,11 +9,16 @@ export class Product {
   @Column()
   name: string;
 
+
+
   @Column('decimal')
   price : number;
 
   @Column()
   stock : number;
+
+  @Column()
+  imagess: string;
 
   @ManyToOne(()=> Category , (category)=> category.products)
   category : Category

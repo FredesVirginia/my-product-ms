@@ -3,7 +3,7 @@ import {
   IsNotEmpty,
   IsNumber,
   IsOptional,
-  IsString
+  IsString,
 } from 'class-validator';
 
 export class CreateProductDto {
@@ -15,15 +15,18 @@ export class CreateProductDto {
   @IsNotEmpty()
   price: number;
 
+  @IsString()
+  @IsNotEmpty()
+  imagess: string;
+
   @IsNumber()
   @IsNotEmpty()
   stock: number;
 
-   @IsString()
+  @IsString()
   @IsNotEmpty()
   category: string;
 }
-
 
 export class UpdateProductDto {
   @IsString()
@@ -35,17 +38,17 @@ export class UpdateProductDto {
   price?: number;
 
   @IsNumber()
-   @IsOptional()
+  @IsOptional()
   stock?: number;
 
-   @IsString()
+  @IsString()
+  @IsOptional()
+  image?: string;
+
+  @IsString()
   @IsOptional()
   category?: string;
 }
-
-
-
-
 
 export class SearTodoListByKeyword {
   @IsString()
