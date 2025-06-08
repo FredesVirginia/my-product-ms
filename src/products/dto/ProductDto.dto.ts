@@ -5,6 +5,8 @@ export class ProductDtoForDecreaseQuantity{
     products : TypeArrayProductDtoForDecreaseQuantity[]
 }
 
+export class ProductDtoDetails extends ProductDtoForDecreaseQuantity{}
+
 export class TypeArrayProductDtoForDecreaseQuantity{
     @IsUUID()
     productId : string;

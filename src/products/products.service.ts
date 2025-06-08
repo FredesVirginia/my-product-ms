@@ -15,7 +15,10 @@ import { CreateProductDto, UpdateProductDto } from './dto/Product-created.dto';
 import { Product } from './entity/product.entity';
 import { Category } from './entity/category.entity';
 import { ProductReconmedationDto } from './dto/ProductReconmedation.dto';
-import { ProductDtoForDecreaseQuantity } from './dto/ProductDto.dto';
+import {
+  ProductDtoDetails,
+  ProductDtoForDecreaseQuantity,
+} from './dto/ProductDto.dto';
 
 @Injectable()
 export class ProductService {
@@ -103,43 +106,75 @@ export class ProductService {
     }
   }
 
+  async getDetailsCart(data: ProductDtoDetails) {
+    const productId = data.products.map((item) => item.productId);
+    const products = await this.productRepository
+      .createQueryBuilder('products')
+      .leftJoinAndSelect('products.category', 'category')
+      .where('products.id IN (:...productId)', { productId })
+      .getMany();
 
+    let total = 0;
+    const productsWithQuantity = products.map((product) => {
+      const cartItem = data.products.find(
+        (item) => item.productId === product.id,
+      );
+      const quantity = cartItem ? cartItem.quantity : 0;
+      const subtotal = product.price * quantity;
+      total += subtotal;
 
+      return {
+        ...product,
+        quantity,
+        subtotal,
+      };
+    });
 
+    console.log(productsWithQuantity)
+    return {
+      products: productsWithQuantity,
+      total,
+    };
+  }
 
   async decrementProductStock(data: ProductDtoForDecreaseQuantity) {
-  const queryRunner = this.productRepository.manager.connection.createQueryRunner();
-  await queryRunner.connect();
-  await queryRunner.startTransaction();
+    const queryRunner =
+      this.productRepository.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-  try {
-    for (const item of data.products) {
-      const product = await queryRunner.manager.findOne(Product, {
-        where: { id: item.productId },
-        lock: { mode: 'pessimistic_write' },
-      });
+    try {
+      for (const item of data.products) {
+        const product = await queryRunner.manager.findOne(Product, {
+          where: { id: item.productId },
+          lock: { mode: 'pessimistic_write' },
+        });
 
-      if (!product) {
-        throw new RpcException(`Producto con id ${item.productId} no encontrado`);
+        if (!product) {
+          throw new RpcException(
+            `Producto con id ${item.productId} no encontrado`,
+          );
+        }
+
+        if (product.stock < item.quantity) {
+          throw new RpcException(
+            `Stock insuficiente para el producto ${product.id}. Disponible: ${product.stock}, requerido: ${item.quantity}`,
+          );
+        }
+
+        product.stock -= item.quantity;
+        await queryRunner.manager.save(product);
       }
 
-      if (product.stock < item.quantity) {
-        throw new RpcException(`Stock insuficiente para el producto ${product.id}. Disponible: ${product.stock}, requerido: ${item.quantity}`);
-      }
-
-      product.stock -= item.quantity;
-      await queryRunner.manager.save(product);
+      await queryRunner.commitTransaction();
+      return { message: 'Stock actualizado correctamente' };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
     }
-
-    await queryRunner.commitTransaction();
-    return { message: 'Stock actualizado correctamente' };
-  } catch (error) {
-    await queryRunner.rollbackTransaction();
-    throw error;
-  } finally {
-    await queryRunner.release();
   }
-}
 
   async updateProduct(payload: { id: string; data: UpdateProductDto }) {
     const { id, data } = payload;
